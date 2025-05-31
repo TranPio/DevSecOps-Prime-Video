@@ -15,7 +15,7 @@ pipeline{
         }
         stage('Checkout from Git'){
             steps{
-                git branch: 'main ', url: 'https://github.com/TranPio/DevSecOps-Prime-Video.git'
+                git branch: 'main ', url: 'https://github.com/TranPio/devsecops-prime-video.git'
             }
         }
         stage("Sonarqube Analysis "){
