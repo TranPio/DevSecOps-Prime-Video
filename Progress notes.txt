@@ -53,8 +53,8 @@ EKS Console Verification – Once created, you can check the cluster in the AWS 
 (b) Associating IAM OIDC Provider
 
 eksctl utils associate-iam-oidc-provider \
-    --region ap-south-1 \
-    --cluster Cloudaseem \
+    --region ap-northeast-1 \
+    --cluster TranHoaiPhu \
     --approve
 Benefits:
 
@@ -68,8 +68,8 @@ OIDC Authentication – Amazon EKS supports OpenID Connect (OIDC) authentication
 
 (c) Creating the Node Group
 
-eksctl create nodegroup --cluster=Cloudaseem \
-                       --region=ap-south-1 \
+eksctl create nodegroup --cluster=TranHoaiPhu \
+                       --region=ap-northeast-1 \
                        --name=node2 \
                        --node-type=t3.medium \
                        --nodes=2 \
