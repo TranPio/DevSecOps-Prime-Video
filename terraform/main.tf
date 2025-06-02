@@ -1,51 +1,49 @@
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-  }
-}
+# main.tf
 
-# Configure the AWS Provider
 provider "aws" {
   region = "ap-northeast-1"
-  access_key = var.access_key
-  secret_key = var.secret_key
 }
 
-# create security group for the ec2 instance
-resource "aws_security_group" "ec2_security_group" {
-  name        = "ec2 security group"
-  description = "allow access on ports 22"
+# Lấy VPC mặc định. Nếu tài khoản không có Default VPC, bạn phải biết VPC ID thủ công
+data "aws_vpc" "default" {
+  default = true
+}
 
-  # allow access on port 22
+# Security Group sử dụng VPC ID lấy từ data source ở trên
+resource "aws_security_group" "ec2_security_group" {
+  name        = "ec2-security-group"
+  description = "allow access on port 22"
+  vpc_id      = data.aws_vpc.default.id
+
   ingress {
-    description = "ssh access"
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    description      = "SSH from anywhere"
+    from_port        = 22
+    to_port          = 22
+    protocol         = "tcp"
+    cidr_blocks      = ["0.0.0.0/0"]
   }
 
   egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = -1
-    cidr_blocks = ["0.0.0.0/0"]
+    description      = "All outbound"
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"
+    cidr_blocks      = ["0.0.0.0/0"]
   }
 
   tags = {
-    Name = "Monitoring server security group"
+    Name = "Monitoring_server_security_group"
   }
 }
 
+# EC2 instance sử dụng Security Group ở trên
 resource "aws_instance" "Monitoring_server" {
-ami = "ami-00bb6a80f01f03502"  
-instance_type = "t2.medium"
-security_groups = [aws_security_group.ec2_security_group.name]
-key_name = var.key_name
-tags = {
-  Name: var.instance_name
-}
+  ami                    = "ami-00bb6a80f01f03502"
+  instance_type          = "t2.medium"
+  key_name               = "primevideopb"
+  vpc_security_group_ids = [aws_security_group.ec2_security_group.id]
+
+  tags = {
+    Name = "Monitoring_server"
+  }
 }
