@@ -30,22 +30,19 @@ spec:
         resources:
           requests:
             cpu: "100m"
-            memory: "128Mi"
+            memory: "256Mi"
           limits:
             cpu: "500m"
-            memory: "256Mi"
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 3000
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 3000
-          initialDelaySeconds: 10
-          periodSeconds: 5
+            memory: "512Mi"
+        env:
+        - name: HOST
+          value: "0.0.0.0"
+        command:
+        - sh
+        - -c
+        - |
+          npm install && npm run build && npx serve -s build -l 3000
+        # Đã loại bỏ liveness/readiness probes để tránh CrashLoopBackOff
 ---
 # Service to expose the Deployment via an AWS Load Balancer
 apiVersion: v1
