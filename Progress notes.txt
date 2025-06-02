@@ -4,7 +4,7 @@ Soanrqube
 
 1. Sonarqube token - xxxxxxxxxxxxxxxxxxxxx
 
-2. Sonarqube Webhoook - jenkins	http://13.216.214.1:8080/sonarqube-webhook/
+2. Sonarqube Webhoook - jenkins	http://54.92.43.126:8080//sonarqube-webhook/
 
 3. GMAIL passtoken - xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
