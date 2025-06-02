@@ -34,8 +34,8 @@ Overall Benefits of This Setup
 (a) Creating the EKS Cluster
 
 eksctl create cluster --name=TranHoaiPhu \
-                      --region=ap-south-1 \
-                      --zones=ap-south-1a,ap-south-1b \
+                      --region=ap-northeast-1 \
+                      --zones=ap-northeast-1a,ap-northeast-1b \
                       --version=1.30 \
                       --without-nodegroup
 Benefits:
