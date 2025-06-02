@@ -33,7 +33,7 @@ Overall Benefits of This Setup
 
 (a) Creating the EKS Cluster
 
-eksctl create cluster --name=Cloudaseem \
+eksctl create cluster --name=TranHoaiPhu \
                       --region=ap-south-1 \
                       --zones=ap-south-1a,ap-south-1b \
                       --version=1.30 \
