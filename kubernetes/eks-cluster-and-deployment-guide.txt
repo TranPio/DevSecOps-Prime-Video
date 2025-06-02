@@ -1,304 +1,338 @@
+````markdown
 How to create an EKS cluster using AWS Console | Create node group | Configure Kubernetes cluster
-
 
 # Step - 1 : Create EKS Management Host in AWS #
 
+> To install an EKS (Elastic Kubernetes Service) cluster with 2 nodes in AWS, follow these steps:
 
-#To install an EKS (Elastic Kubernetes Service) cluster with 2 nodes in AWS, follow these steps:
+## How kubectl and eksctl Work Together?
+1️⃣ Use `eksctl` to create the EKS cluster ✅  
+2️⃣ Use `kubectl` to deploy & manage applications ✅  
+3️⃣ Use `kubectl` for day-to-day operations ✅  
 
-How kubectl and eksctl Work Together?
-1️⃣ Use eksctl to create the EKS cluster ✅
-2️⃣ Use kubectl to deploy & manage applications ✅
-3️⃣ Use kubectl for day-to-day operations ✅
-👉 kubectl is the command-line tool for interacting with Kubernetes clusters.
-It allows you to:
-✔ Deploy applications
-✔ Manage resources (pods, services, deployments, etc.)
-✔ Monitor cluster health
-✔ Scale workloads
-✔ Debug issues 
+👉 `kubectl` is the command-line tool for interacting with Kubernetes clusters.  
+It allows you to:  
+✔ Deploy applications  
+✔ Manage resources (pods, services, deployments, etc.)  
+✔ Monitor cluster health  
+✔ Scale workloads  
+✔ Debug issues  
 
+---
 
-Prerequisites
-1. AWS Account: Make sure you have an AWS account and configure one ec2 instance
-2. kubectl: Install kubectl. 
-3. AWS CLI: Install and configure the AWS CLI.
-4. eksctl: Install eksctl.
+## Prerequisites
+1. **AWS Account**: Make sure you have an AWS account and configure one EC2 instance.  
+2. **kubectl**: Install `kubectl`.  
+3. **AWS CLI**: Install and configure the AWS CLI.  
+4. **eksctl**: Install `eksctl`.  
 
-Step-1
+---
 
+## Install AWS CLI and kubectl
 
-2) Install AWS CLI latest version using below commands 
+1) **Install AWS CLI latest version** using the following commands:
+   ```bash
+   sudo apt install unzip
+   curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+   unzip awscliv2.zip
+   sudo ./aws/install
+   aws --version
+````
 
+2. **Install kubectl** using the following commands:
+
+   ```bash
+   curl -o kubectl https://amazon-eks.s3.us-west-2.amazonaws.com/1.19.6/2021-01-05/bin/linux/amd64/kubectl
+   chmod +x ./kubectl
+   sudo mv ./kubectl /usr/local/bin
+   kubectl version --client
+   kubectl version --short --client
+   ```
+
+3. **Install eksctl** using the following commands:
+
+   ```bash
+   curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+   sudo mv /tmp/eksctl /usr/local/bin
+   eksctl version
+   ```
+
+---
+
+# Step - 2 : Create IAM User & Attach Policies
+
+### Create IAM user
+
+**IAM Username:** `tranhoaiphu`
+
+1. Go to IAM service in AWS Console → **Users** → **Add user** → Set username to `tranhoaiphu`.
+2. Under **Select AWS access type**, check **Programmatic access**.
+3. **Attach existing policies directly**:
+
+   * `AmazonEKSClusterPolicy`
+   * `AmazonEKSWorkerNodePolicy`
+   * `AmazonEC2ContainerRegistryReadOnly`
+   * `IAMReadOnlyAccess` (optional)
+   * `AmazonVPCFullAccess`
+   * `AmazonEC2FullAccess`
+   * `AdministratorAccess`
+4. Complete user creation, download or copy the **Access Key ID** and **Secret Access Key**.
+
+---
+
+### Attach IAM Role to EKS Management Host
+
+1. Open EC2 Console → Select your **EKS Management Host** instance → **Actions** → **Security** → **Modify IAM Role**.
+2. Choose the IAM role you created for `tranhoaiphu` and attach it to the instance.
+
+---
+
+# Step - 3 : Create EKS Cluster & Node Group
+
+## (a) Creating the EKS Cluster
+
+```bash
+eksctl create cluster \
+  --name=TranHoaiPhu2 \
+  --region=ap-northeast-1 \
+  --zones=ap-northeast-1a,ap-northeast-1c \
+  --version=1.30 \
+  --without-nodegroup
 ```
-sudo apt install unzip
-curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-unzip awscliv2.zip
-sudo ./aws/install
-aws --version
-	
----------------------------------------------------------------------------------------------------------------
 
----------------------------------------------------------------------------------------------------------------
+**Benefits:**
 
+* **Creates an EKS Cluster** – Provisions an Amazon EKS cluster named `TranHoaiPhu2` without any worker nodes.
+* **Multi-AZ Deployment** – The `--zones` flag distributes the cluster across two Availability Zones (`ap-northeast-1a` and `ap-northeast-1c`) for high availability.
+* **Version Control** – Setting `--version=1.30` ensures a specific Kubernetes version for compatibility and stability.
+* **Without Nodegroup** – Allows fine-grained control over node provisioning; you’ll add worker nodes separately.
+* **EKS Console Verification** – Once created, verify the cluster in the AWS EKS console under **Clusters**.
 
-2) Connect to machine and install kubectl using below commands 
-```
-curl -o kubectl https://amazon-eks.s3.us-west-2.amazonaws.com/1.19.6/2021-01-05/bin/linux/amd64/kubectl
-chmod +x ./kubectl
-sudo mv ./kubectl /usr/local/bin
-kubectl version --client
-kubectl version --short --client
-```
-```
+---
 
-4) Install eksctl using below commands
+## (b) Associating IAM OIDC Provider
 
-What is eksctl?
-👉 eksctl is a CLI tool for managing Amazon EKS clusters (Elastic Kubernetes Service).
-It simplifies cluster creation, scaling, and deletion on AWS.
-
-Why Use eksctl?
-✔ Easily create & manage EKS clusters
-✔ Automates networking, IAM roles, and node groups
-✔ Works seamlessly with AWS CLI
-
-```
-curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
-sudo mv /tmp/eksctl /usr/local/bin
-eksctl version
-```
-# Step - 2 : Create User & add policies as below 
-Create IAM role & attach to EKS Management Host #
-Create user 
-bingouser
-
-1) Create New Role using IAM service ( Select Usecase - ec2 ) 	
-2) Add below permissions for the role <br/>
-	- IAM - fullaccess <br/>
-	- VPC - fullaccess <br/>
-	- EC2 - fullaccess  <br/>
-	- CloudFomration - fullaccess  <br/>
-	- Administrator - acces <br/>
-        - AmazonEKSClusterPolicy
-        - AmazonEKSWorkerNodePolicy
-
-		
-3) Enter  (AWS configure)
-Create credentials to connect with your aws account
-
-
-
-
-4) Attach created role to EKS Management Host (Select EC2 => Click on Security => Modify IAM Role => attach IAM role we have created) 
-
-
-Create EKS Cluster
-Execute the below commands as separate set
-(a)
-eksctl create cluster --name=Cloudaseem \
-                      --region=ap-south-1 \
-                      --zones=ap-south-1a,ap-south-1b \
-                      --version=1.30 \
-                      --without-nodegroup
-
-It will take 5-10 minutes to create the cluster
-Goto EKS Console and verify the cluster.
-
-(b)
+```bash
 eksctl utils associate-iam-oidc-provider \
-    --region ap-south-1 \
-    --cluster Cloudaseem \
-    --approve
+  --region ap-northeast-1 \
+  --cluster TranHoaiPhu2 \
+  --approve
+```
 
-The above command is crucial when setting up an EKS cluster because it enables IAM roles for service accounts (IRSA)
-Amazon EKS uses OpenID Connect (OIDC) to authenticate Kubernetes service accounts with IAM roles.
-Associating the IAM OIDC provider allows Kubernetes workloads (Pods) running in the cluster to assume IAM roles securely.
-Without this, Pods in EKS clusters would require node-level IAM roles, which grant permissions to all Pods on a node.
-Without this, these services will not be able to access AWS resources securely.
+**Benefits:**
 
-(c)
-Before executing the below command, in the 'ssh-public-key' keep the  '<PEM FILE NAME>' (dont give .pem. Just give the pem file name) which was used to create Jenkins Server
+* **Secure IAM Role Access for Pods** – Enables IRSA (IAM Roles for Service Accounts), allowing Kubernetes Pods to assume IAM roles securely.
+* **Prevents Over-Permission Issues** – Without IRSA, all Pods would rely on the IAM role assigned to EC2 worker nodes, potentially granting excessive permissions.
+* **Required for AWS Service Integrations** – Many AWS services like Load Balancers, External DNS, and Auto Scaling require IRSA.
+* **OIDC Authentication** – Amazon EKS uses OpenID Connect (OIDC) to authenticate Kubernetes service accounts with IAM roles.
 
-eksctl create nodegroup --cluster=Cloudaseem \
-                       --region=ap-south-1 \
-                       --name=node2 \
-                       --node-type=t3.medium \
-                       --nodes=2 \
-                       --nodes-min=2 \
-                       --nodes-max=4 \
-                       --node-volume-size=20 \
-                       --ssh-access \
-                       --ssh-public-key=starbucks1 \
-                       --managed \
-                       --asg-access \
-                       --external-dns-access \
-                       --full-ecr-access \
-                       --appmesh-access \
-                       --alb-ingress-access
+---
 
-It will take 5-10 minutes 
+## (c) Updating the `vpc-cni` Addon with IRSA Policies
 
-(d) For internal communication b/w control plane and worker nodes, open 'all traffic' in the security group of EKS Cluster
+```bash
+eksctl update addon \
+  --name vpc-cni \
+  --cluster TranHoaiPhu2 \
+  --region ap-northeast-1 \
+  --approve
+```
 
+**Benefits:**
 
+* Attaches the recommended IAM policies for the `vpc-cni` addon via IRSA.
+* Ensures the AWS VPC CNI plugin has the correct permissions without attaching broad EC2 node roles.
 
-eksctl delete nodegroup --cluster=Cloudaseem --name=node2 --region=ap-south-1 --wait
+---
 
-eksctl utils disassociate-iam-oidc-provider --cluster=Cloudaseem --region=ap-south-1
+## (d) Creating the Node Group
 
-eksctl delete cluster --name=Cloudaseem --region=ap-south-1 --wait
+Before you run this command, ensure you have an SSH key pair in EC2 named `tranhoaiphu-key`. If you haven’t created one, go to EC2 → Key Pairs → **Create Key Pair** → name it `tranhoaiphu-key`.
 
+```bash
+eksctl create nodegroup \
+  --cluster=TranHoaiPhu2 \
+  --region=ap-northeast-1 \
+  --name=nodegroup-1 \
+  --node-type=t3.large \
+  --nodes=2 \
+  --nodes-min=2 \
+  --nodes-max=4 \
+  --node-volume-size=20 \
+  --ssh-access \
+  --ssh-public-key=tranhoaiphu-key \
+  --managed \
+  --asg-access \
+  --external-dns-access \
+  --full-ecr-access \
+  --appmesh-access \
+  --alb-ingress-access
+```
 
+**Benefits:**
 
+* **Adds Managed Worker Nodes** – Creates a managed node group, reducing maintenance overhead.
+* **Optimized Resource Scaling**
 
-Step 2: Assign IAM Permissions (Optional)
-If the IAM user startbucks doesn’t have EKS permissions, grant them using AWS Console:
+  * `--nodes=2` ensures two initial worker nodes.
+  * `--nodes-min=2` and `--nodes-max=4` allow auto-scaling based on demand.
+* **Right-Sized Compute Power** – `t3.large` (2 vCPU, 8 GB RAM) balances cost and performance.
+* **Persistent Storage** – `--node-volume-size=20` attaches 20 GB EBS per node.
+* **Secure SSH Access** – `--ssh-access --ssh-public-key=tranhoaiphu-key` allows SSH into nodes using key pair `tranhoaiphu-key`.
+* **AWS Service Integrations**
 
-Go to IAM in AWS Console.
+  * `--asg-access` → Enables Amazon Auto Scaling.
+  * `--external-dns-access` → Grants permissions for External DNS.
+  * `--full-ecr-access` → Provides full access to Amazon ECR for pulling container images.
+  * `--appmesh-access` → Enables AWS App Mesh for microservice networking.
+  * `--alb-ingress-access` → Allows Kubernetes ALB Ingress Controller to manage AWS ALB (Application Load Balancer).
 
-Select Users → Click on startbucks.
+---
 
-Click Add Permissions → Attach policies.
+## (e) Verifying the Cluster and Worker Nodes
 
-Add the following policies:
+1. **Update kubeconfig** so `kubectl` can talk to your new cluster:
 
-AmazonEKSClusterPolicy
+   ```bash
+   aws eks update-kubeconfig --region ap-northeast-1 --name TranHoaiPhu2
+   ```
+2. **Check nodes**:
 
-AmazonEKSWorkerNodePolicy
+   ```bash
+   kubectl get nodes
+   ```
 
-AmazonEC2ContainerRegistryReadOnly
+   You should see the worker nodes in `Ready` state.
+3. **Check addons**:
 
-IAMReadOnlyAccess (optional)
+   ```bash
+   eksctl get addon --cluster=TranHoaiPhu2 --region=ap-northeast-1
+   ```
 
-Step 1: Update AWS Auth ConfigMap
-Open your AWS Console and navigate to the EKS service.
+   You should see addons like `coredns`, `kube-proxy`, `metrics-server`, and `vpc-cni`.
 
-Select your EKS Cluster.
+---
 
-Go to the Configuration tab.
+# Step - 4 : Post-Configuration and Cleanup
 
-Under Compute, note the IAM role of the worker nodes.
+## (a) Deploy a Sample Application (Optional)
 
-Now, connect to the cluster using AWS CLI:
+1. **Create a `manifest.yml`** in your local directory. For example:
 
+   ```yaml
+   apiVersion: v1
+   kind: Pod
+   metadata:
+     name: nginx-sample
+   spec:
+     containers:
+       - name: nginx
+         image: nginx:latest
+         ports:
+           - containerPort: 80
+   ```
+2. **Apply the manifest**:
 
-aws eks update-kubeconfig --region <your-region> --name <your-cluster-name>
+   ```bash
+   kubectl apply -f manifest.yml
+   ```
+3. **Verify Deployment**:
 
+   ```bash
+   kubectl get pods
+   kubectl get svc
+   ```
 
-aws eks update-kubeconfig --region ap-south-1 --name Cloudaseem
+---
 
-kubectl get nodes
+## (b) Cleanup Resources to Avoid Billing
 
-Switch to the jenkins user
-sudo -su jenkins
-pwd ---- /home/ubuntu
-whoami ---- jenkins
+When you finish your practice, delete the resources to avoid unnecessary charges:
 
-Configure AWS credentials:
-aws configure ---> Configure with access and secret access keys
-This will create the AWS credentials file at "/var/lib/jenkins/.aws/credentials"
+1. **Delete Node Group**:
 
-Verify the credentials
-aws sts get-caller-identity
-If the credentials are valid, you should see output like this:
-{
-    "UserId": "EXAMPLEUSERID",
-    "Account": "123456789012",
-    "Arn": "arn:aws:iam::123456789012:user/example-user"
-}
+   ```bash
+   eksctl delete nodegroup --cluster=TranHoaiPhu2 --name=nodegroup-1 --region=ap-northeast-1 --wait
+   ```
+2. **Disassociate IAM OIDC Provider**:
 
-Comeout of the Jenkins user to Restart Jenkins
-exit
-sudo systemctl restart jenkins
+   ```bash
+   eksctl utils disassociate-iam-oidc-provider --cluster=TranHoaiPhu2 --region=ap-northeast-1
+   ```
+3. **Delete EKS Cluster**:
 
-Switch to Jenkins user
-sudo -su jenkins
-aws eks update-kubeconfig --region ap-south-1 --name Cloudaseem
-stage('Deploy to EKS Cluster') {
-            steps {
-                dir('kubernetes') {
-                script {
-                    sh '''
-                    echo "Verifying AWS credentials..."
-                    aws sts get-caller-identity
+   ```bash
+   eksctl delete cluster --name=TranHoaiPhu2 --region=ap-northeast-1 --wait
+   ```
 
-                    echo "Configuring kubectl for EKS cluster..."
-                    aws eks update-kubeconfig --region ap-south-1 --name Cloudaseem
+---
 
-                    echo "Verifying kubeconfig..."
-                    kubectl config view
+# A. Verify the Cluster
 
-                    echo "Deploying application to EKS..."
-                    kubectl apply -f manifest.yml
-                    
-                    echo "Verifying deployment..."
-                    kubectl get pods
-                    kubectl get svc
-                    '''
-                }
-            }
-        }
-    
-    }
+After the cluster is created, verify that `kubectl` is configured to use the new cluster:
 
-2. delete Cluster and other resources we have used in AWS Cloud to avoid billing ##
-
-
- eksctl delete nodegroup --cluster=Cloudaseem --name=node2 --region=ap-south-1 --wait
-
-  eksctl delete cluster --name=Cloudaseem --region=ap-south-1 --wait
-
-
-
--------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-A. Verify the Cluster
-After the cluster is created, verify that kubectl is configured to use the new cluster:
-
+```bash
 kubectl get svc
+```
 
-NAME             TYPE        CLUSTER-IP    EXTERNAL-IP   PORT(S)   AGE
-kubernetes       ClusterIP   10.100.0.1    <none>        443/TCP   1m
-
-
-
-
-B. Check the Nodes
-Check that the nodes are up and running:
-`
- kubectl get nodes  
-`
-
-NAME                            STATUS   ROLES    AGE     VERSION
-ip-192-168-xx-xx.ec2.internal   Ready    <none>   5m      v1.17.12-eks-7684af
-ip-192-168-xx-xx.ec2.internal   Ready    <none>   5m      v1.17.12-eks-7684af
-
-B. Create manifest.yml file and execute this command
-kubectl apply -f manifest.yml
-
-
-kubectl get pods
-
-kubectl describe pod <pod-name>
-
-kubectl logs <pod-name>
-
-kubectl delete pod <pod-name>
-
-
-You have successfully created an EKS cluster with 2 nodes in AWS using eksctl. You can now deploy applications to your Kubernetes cluster.
-
-## Note: We should be able to see EKS cluster nodes here.**
-
-# We are done with our Setup #
-	
-## Step - 4 : After your practise, delete Cluster and other resources we have used in AWS Cloud to avoid billing ##
+Expected output:
 
 ```
-eksctl delete nodegroup --cluster=Cloudaseem --name=node2 --region=ap-south-1 --wait
+NAME         TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+kubernetes   ClusterIP   10.100.0.1   <none>        443/TCP   1m
+```
 
-eksctl delete cluster --name=Cloudaseem --region=ap-south-1 --wait
+# B. Check the Nodes
 
+Check that the nodes are up and running:
 
+```bash
+kubectl get nodes
+```
+
+Expected output format:
+
+```
+NAME                             STATUS   ROLES    AGE   VERSION
+ip-192-168-xx-xx.ec2.internal    Ready    <none>   5m    v1.17.12-eks-7684af
+ip-192-168-xx-xx.ec2.internal    Ready    <none>   5m    v1.17.12-eks-7684af
+```
+
+# C. Working with Pods
+
+1. **Apply your manifest**:
+
+   ```bash
+   kubectl apply -f manifest.yml
+   ```
+2. **Get pods**:
+
+   ```bash
+   kubectl get pods
+   ```
+3. **Describe a pod**:
+
+   ```bash
+   kubectl describe pod <pod-name>
+   ```
+4. **Get pod logs**:
+
+   ```bash
+   kubectl logs <pod-name>
+   ```
+5. **Delete a pod**:
+
+   ```bash
+   kubectl delete pod <pod-name>
+   ```
+
+---
+
+You have successfully created an EKS cluster named **TranHoaiPhu2** with 2 nodes in AWS using `eksctl`. You can now deploy applications to your Kubernetes cluster.
+
+**Note:** You should be able to see the EKS cluster nodes in the output of `kubectl get nodes`.
+
+# We are done with our Setup
+
+```
 ```
