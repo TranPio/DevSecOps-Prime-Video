@@ -71,13 +71,13 @@ OIDC Authentication – Amazon EKS supports OpenID Connect (OIDC) authentication
 eksctl create nodegroup --cluster=TranHoaiPhu \
                        --region=ap-northeast-1 \
                        --name=node2 \
-                       --node-type=t3.medium \
+                       --node-type=t3.large \
                        --nodes=2 \
                        --nodes-min=2 \
                        --nodes-max=4 \
                        --node-volume-size=20 \
                        --ssh-access \
-                       --ssh-public-key=cloudaseem \
+                       --ssh-public-key=primevideopb \
                        --managed \
                        --asg-access \
                        --external-dns-access \
