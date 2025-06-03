@@ -2,17 +2,32 @@
 
 provider "aws" {
   region = "ap-northeast-1"
-  # AWS_ACCESS_KEY_ID và AWS_SECRET_ACCESS_KEY sẽ tự lấy từ biến môi trường
 }
 
-# Lấy danh sách tất cả VPC trong region, rồi chọn phần tử đầu tiên
+# Lấy danh sách tất cả VPC, chọn VPC đầu tiên (đã có) để tạo Security Group
 data "aws_vpcs" "all" {}
+
+# Tìm AMI Amazon Linux 2 mới nhất
+data "aws_ami" "amazon_linux_2" {
+  most_recent = true
+
+  filter {
+    name   = "name"
+    values = ["amzn2-ami-hvm-*-x86_64-gp2"]
+  }
+
+  filter {
+    name   = "architecture"
+    values = ["x86_64"]
+  }
+
+  owners = ["amazon"]
+}
 
 resource "aws_security_group" "ec2_security_group" {
   name        = "ec2-security-group"
   description = "allow SSH access on port 22"
-  # Dùng VPC đầu tiên tìm được (thay thế cho default VPC)
-  vpc_id = data.aws_vpcs.all.ids[0]
+  vpc_id      = data.aws_vpcs.all.ids[0]
 
   ingress {
     description = "SSH from anywhere"
@@ -36,7 +51,7 @@ resource "aws_security_group" "ec2_security_group" {
 }
 
 resource "aws_instance" "Monitoring_server" {
-  ami                    = "ami-00bb6a80f01f03502"
+  ami                    = data.aws_ami.amazon_linux_2.id
   instance_type          = "t2.medium"
   key_name               = "primevideopb"
   vpc_security_group_ids = [aws_security_group.ec2_security_group.id]
